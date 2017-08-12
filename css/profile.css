@@ -1,0 +1,91 @@
+.intro1{
+	float: left;
+	margin-left: 5px;
+	width:170px;
+}
+.intro2{
+	float: left;
+	margin:5px;
+}
+.text{
+	font-variant: normal;
+	line-height: normal;
+	font-size: small;
+	text-align: justify;
+	text-justify: inter-word;
+}
+.icon{
+	margin:5px;
+	font-size: x-small;
+	text-align: center;
+	vertical-align: middle;
+	line-height: 50px;
+}
+.left{
+	float: left;
+	margin-left: 5px;
+}
+.circle {
+	display: block;
+	background: black;
+	border-radius: 50%;
+	height: 50px;
+	width: 75px;
+	margin: 0;
+	background: radial-gradient(circle at 100px 10px, #5cabff, #000);
+
+}
+.button {
+	background-color: #4CAF50; /* Green */
+	border: none;
+	color: white;
+	padding: 15px 32px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 12px;
+	margin: 4px 2px;
+	cursor: pointer;
+	border-radius: 8px;
+}
+.right{
+	text-align: right;
+}
+.blue {
+	opacity: 0.8;
+	background-color: #008CBA; /* gray */
+}
+
+.fa {
+	padding: 20px;
+	font-size: 30px;
+	width: 30px;
+	text-align: center;
+	text-decoration: none;
+	margin: 5px 2px;
+	border-radius: 50%;
+}
+
+.fa:hover {
+	opacity: 0.7;
+}
+
+.fa-facebook {
+	background: #3B5998;
+	color: white;
+}
+
+.fa-twitter {
+	background: #55ACEE;
+	color: white;
+}
+
+.fa-google {
+	background: #dd4b39;
+	color: white;
+}
+
+.fa-skype {
+	background: #00aff0;
+	color: white;
+}
