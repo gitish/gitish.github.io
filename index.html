@@ -1,0 +1,600 @@
+<html lang="en" data-theme="light"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Agent – Scan Report</title>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --bg:linear-gradient(180deg,#e7ebf5 0%,#fbe0e7 12%,#e4e9f4 40%,#e4e9f4 100%);
+  --card:rgba(255,255,255,.9); --card-solid:#fff; --text:#111827; --muted:#6b7280;
+  --line:#e5e7eb; --soft:#f3f4f6; --ink:#0f172a; --on-ink:#fff; --track:#e5e7eb;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 10px 28px rgba(15,23,42,.06);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme=dark]{
+  color-scheme:dark;
+  --bg:linear-gradient(180deg,#0b1020 0%,#1b1226 12%,#0e1424 40%,#0e1424 100%);
+  --card:rgba(24,30,48,.92); --card-solid:#182030; --text:#e5e7eb; --muted:#9ca3af;
+  --line:#2a3347; --soft:#222b40; --ink:#e5e7eb; --on-ink:#0f172a; --track:#2a3347;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.3);
+}
+.t-ok{--c:#3f6212;--b:#bef264;--bg:#ecfccb}
+.t-warn{--c:#c2410c;--b:#fdba74;--bg:#ffedd5}
+.t-yellow{--c:#a16207;--b:#fde047;--bg:#fefce8}
+.t-bad{--c:#b91c1c;--b:#fca5a5;--bg:#fee2e2}
+.t-pink{--c:#be123c;--b:#fecdd3;--bg:#fff1f2}
+.t-gray{--c:#374151;--b:#d1d5db;--bg:#f3f4f6}
+[data-theme=dark] .t-ok{--c:#bef264;--b:rgba(163,230,53,.4);--bg:rgba(132,204,22,.13)}
+[data-theme=dark] .t-warn{--c:#fdba74;--b:rgba(251,146,60,.45);--bg:rgba(249,115,22,.14)}
+[data-theme=dark] .t-yellow{--c:#fde047;--b:rgba(250,204,21,.4);--bg:rgba(234,179,8,.12)}
+[data-theme=dark] .t-bad{--c:#fca5a5;--b:rgba(248,113,113,.45);--bg:rgba(239,68,68,.14)}
+[data-theme=dark] .t-pink{--c:#fda4af;--b:rgba(251,113,133,.4);--bg:rgba(244,63,94,.12)}
+[data-theme=dark] .t-gray{--c:#d1d5db;--b:#374151;--bg:#1f2937}
+.tone{color:var(--c);background:var(--bg);border:1px solid var(--b)}
+
+body{margin:0;min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--text);
+  font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1480px;margin:0 auto;padding:16px 20px 40px;display:grid;gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px 24px}
+h1,h2,h3{margin:0}
+h2{font-size:18px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+a{color:#be123c}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;flex-wrap:wrap}
+.brand .title{font-size:19px;font-weight:700}
+.ver{margin-left:8px;font-size:11px;font-weight:700;color:#be123c;background:#fff1f2;border:1px solid #fecdd3;border-radius:999px;padding:2px 9px}
+.brand .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.tabs{display:flex;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{border:0;background:transparent;border-radius:10px;padding:8px 16px;font-weight:500;color:var(--muted)}
+.tabs button.active{background:var(--card-solid);color:var(--text);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.actions{display:flex;gap:10px;align-items:center}
+.btn{border-radius:999px;padding:9px 16px;font-weight:600;border:1px solid var(--line);background:var(--card-solid)}
+.btn.ink{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card-solid);font-size:16px}
+
+/* progress */
+.hint{color:var(--muted);margin:6px 0 18px}
+.status-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.status-card{border-radius:16px;padding:20px 10px;text-align:center;font-weight:700;border:2px solid var(--b);
+  background:var(--bg);color:var(--c);transition:transform .12s,box-shadow .12s}
+.status-card:hover{transform:translateY(-2px)}
+.status-card .ic{font-size:24px;display:block;margin-bottom:6px}
+.status-card .n{display:block;font-size:30px;margin-top:4px}
+.status-card.active{box-shadow:0 0 0 4px rgba(190,18,60,.18),0 6px 18px rgba(0,0,0,.12);border-color:var(--c)}
+
+/* layout */
+.layout{display:grid;gap:20px;align-items:start}
+.side,.main{display:grid;gap:18px}
+.view{display:grid;gap:18px}
+.placeholder{padding:60px 24px;text-align:center;color:var(--muted)}
+
+/* sidebar */
+.card-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title h3{font-size:18px;font-weight:700}
+.pill{display:inline-block;border-radius:999px;padding:3px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+.side p.lead{margin:10px 0 14px;color:var(--muted);font-size:14px}
+label.f{display:block;font-size:12.5px;font-weight:700;margin:12px 0 6px}
+.input,select.input{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--card-solid);color:var(--text);padding:10px 12px;font:inherit}
+.row2{display:grid;grid-template-columns:1fr 1.2fr;gap:12px}
+.row-end{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:14px;align-items:end}
+.row-end .btn{padding:12px}
+.app-tools{display:grid;grid-template-columns:1fr 1.3fr;gap:10px;margin:14px 0}
+.app-list{min-height:80px;display:grid;gap:8px;align-content:start}
+.app-empty{text-align:center;color:var(--muted);padding:26px 0}
+.app-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--card-solid)}
+.app-item b{display:block;font-size:13px;word-break:break-all}
+.app-item small{color:var(--muted);word-break:break-all}
+.pager{display:flex;justify-content:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.pager button{border:1px solid var(--line);background:var(--card-solid);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--muted)}
+.pager button.cur{background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-weight:700;width:32px;height:32px;padding:0}
+.pager button:disabled{opacity:.45;cursor:default}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.tile{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile small{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tile b{display:block;font-size:20px;font-family:var(--mono);margin-top:6px}
+
+/* workflow */
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#be123c}
+.wf-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.wf-head h1{font-size:22px;margin:6px 0}
+.repo{color:var(--muted)}
+.repo a{font-family:var(--mono);word-break:break-all}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;font-family:var(--mono)}
+
+/* summary */
+.sum-grid{display:grid;grid-template-columns:270px 1fr;gap:22px}
+.score{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+.ring{position:relative;width:140px;height:140px;margin:6px auto 14px}
+.ring svg{transform:rotate(-90deg)}
+.ring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .g{font-size:34px;font-weight:800;line-height:1}
+.ring .s{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:4px}
+.score b{display:block;font-size:15px}
+.score small{display:block;margin-top:10px;font-family:var(--mono);color:var(--muted);font-size:12px}
+.sum-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.banner{border-radius:10px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--b);background:var(--bg);color:var(--text)}
+.banner.warn{border-left:4px solid #dc2626}
+.banner.ok{border-left:4px solid #65a30d}
+.banner .mono{font-size:13px}
+.pr{border-radius:12px;padding:14px 16px;border:1px solid var(--b);background:var(--bg)}
+.pr-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.pr-top a{font-weight:700;color:var(--c);text-decoration:none}
+.pr .link{display:block;margin:8px 0 4px;font-family:var(--mono);font-size:13px;color:var(--c);word-break:break-all}
+.pr small{color:var(--muted)}
+.branch{border:1px solid var(--b);border-radius:999px;padding:3px 12px;font-family:var(--mono);font-size:12.5px;font-weight:600;background:var(--card-solid)}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
+.metric .top{display:flex;justify-content:space-between;align-items:center}
+.metric .lab{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.metric .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.metric .val{font-size:30px;font-weight:800;margin:14px 0 6px}
+.metric .sub{color:var(--muted);font-size:13px}
+
+/* two panels */
+.two{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.panel-head h3{font-size:18px}
+.badge-mono{font-family:var(--mono);font-size:12.5px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+.sev-row{display:grid;grid-template-columns:110px 1fr 60px;gap:12px;align-items:center;margin:11px 0}
+.sev-row .nm{display:flex;align-items:center;gap:8px;font-weight:500}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.bar{height:8px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px}
+.sev-row .cnt{text-align:right;font-family:var(--mono);font-size:13px}
+.ba{display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:14px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:20px}
+.ba small{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ba b{display:block;font-size:19px;margin:6px 0 4px}
+.ba em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.comp{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card-solid)}
+.comp table{width:100%;border-collapse:collapse}
+.comp th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:14px 16px}
+.comp td{padding:14px 16px;border-top:1px solid var(--line)}
+.comp td:first-child{font-weight:700}
+.comp td.st{text-align:right}
+
+/* breakdown */
+.group{border-radius:14px;padding:14px 16px;margin-top:16px;border:1px solid var(--b);background:var(--bg)}
+.group h4{margin:0 0 12px;color:var(--c);font-size:15px}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.cve-pill{background:var(--card-solid);border:1px solid var(--b);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13.5px;color:var(--text)}
+.cve-pill .id{color:var(--c);font-weight:800}
+.rem{background:var(--card-solid);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:12px 14px;margin-top:10px}
+.rem .l1{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.rem .pk{color:#be123c;font-weight:700}
+.rem .why{margin-top:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:12px 20px;border-radius:12px;box-shadow:var(--shadow);z-index:10}
+
+@media (max-width:1100px){
+  .layout,.two,.sum-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .status-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .metrics{grid-template-columns:1fr}
+  .ba{grid-template-columns:1fr 1fr}
+  .tabs{width:100%;overflow:auto}
+}
+</style>
+<style id="__web-inspector-hide-shortcut-style__">
+.__web-inspector-hide-shortcut__, .__web-inspector-hide-shortcut__ *
+{
+    visibility: hidden !important;
+}
+</style></head>
+<body>
+<div class="wrap">
+
+  <header class="card topbar">
+    <div class="brand">
+      <div><span class="title" id="brandName">Security Agent</span><span class="ver" id="brandVer" hidden=""></span></div>
+      <div class="sub" id="brandTag"></div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-view="dashboard">🤖 Agent Activity Dashboard</button>
+      <button data-view="reports" class="active">📊 Reports</button>
+      <button data-view="logs">🖥️ Code &amp; Logs</button>
+    </nav>
+    <div class="actions">
+      <button class="btn" id="exportBtn">⬇ Export Report (CSV)</button>
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle dark mode">🌙</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>Analysis Progress</h2>
+    <p class="hint">ⓘ Click a status card to filter applications below</p>
+    <div class="status-grid" id="statusGrid"><button class="status-card tone t-ok" data-status="completed"><span class="ic">✅</span>Completed<span class="n">0</span></button><button class="status-card tone t-warn" data-status="in_progress"><span class="ic">🔄</span>In Progress<span class="n">0</span></button><button class="status-card tone t-yellow" data-status="pending"><span class="ic">⏳</span>Pending<span class="n">0</span></button><button class="status-card tone t-bad" data-status="failed"><span class="ic">❌</span>Failed<span class="n">0</span></button><button class="status-card tone t-gray" data-status="cancelled"><span class="ic">🚫</span>Cancelled<span class="n">0</span></button></div>
+  </section>
+
+  <div class="layout">
+    
+
+    <main class="main">
+      <div class="view" id="view-reports">
+        <section class="card" id="workflow"><div class="wf-head"><div><div class="eyebrow">Active Application Workflow</div><h1></h1><div class="repo">🔗 Repo URL: <a href="#" target="_blank" rel="noopener noreferrer"></a></div></div><span class="pill tone t-gray" style="padding:8px 16px"></span></div><div class="chips"><span class="chip">Session: </span><span class="chip">🌿 Branch:  → </span><span class="chip">🛡️ Severity: </span><span class="chip">⏱️ Duration: 0s</span><span class="chip">🔁 Retries: 0/0</span></div></section>
+        <section class="card" id="summary"><div class="sum-grid"><div class="score"><div class="ring"><svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="52" fill="none" stroke="var(--track)" stroke-width="12"></circle><circle cx="70" cy="70" r="52" fill="none" stroke="#6b7280" stroke-width="12" stroke-linecap="round" stroke-dasharray="0.0 326.7"></circle></svg><div class="mid"><div class="g" style="color:#6b7280">?</div><div class="s">0/100</div></div></div><b>Security Health Score</b><small>Before: ? (0) → After: ? (0)</small></div><div><div class="sum-top"><span class="pill tone t-pink">SUMMARY</span><span class="mono muted" style="font-size:12px"></span></div><div class="banner tone t-ok ok"><span style="color:var(--text)">⚠️ <b>Fixed 0 of 0 CVEs:</b> Score improved from ? (0) → ? (0) in 0s.</span></div></div></div></section>
+        <div class="metrics" id="metrics"><div class="metric"><div class="top"><span class="lab">Critical &amp; High Fixed</span><span class="ico" style="background:#ecfccb">🛡️</span></div><div class="val" style="color:#c2410c">0/0</div><div class="sub">0 Critical/High remaining (0 fixed)</div></div><div class="metric"><div class="top"><span class="lab">Risk Reduction</span><span class="ico" style="background:#dbeafe">📉</span></div><div class="val" style="color:var(--text)">0% (-0.0 pts)</div><div class="sub">0 of 0 CVEs fixed (0 remaining)</div></div><div class="metric"><div class="top"><span class="lab">Fix Time</span><span class="ico" style="background:#ffedd5">⚡</span></div><div class="val" style="color:var(--text)">0s</div><div class="sub">Completed in 0s</div></div><div class="metric"><div class="top"><span class="lab">Build &amp; Tests</span><span class="ico" style="background:#fee2e2">❌</span></div><div class="val" style="color:#b91c1c">N/A</div><div class="sub"></div></div></div>
+        <div class="two">
+          <section class="card" id="vulns"><div class="panel-head"><h3>📊 Vulnerabilities (Before → After)</h3><span class="badge-mono">0 Total CVEs (0.0 CVSS pts)</span></div><div class="sev-row"><span class="nm"><i class="dot" style="background:#b91c1c"></i>Critical</span><div class="bar" title="0 of 0 remaining"><i style="width:0%;background:#b91c1c"></i></div><span class="cnt">0 → 0</span></div><div class="sev-row"><span class="nm"><i class="dot" style="background:#ea580c"></i>High</span><div class="bar" title="0 of 0 remaining"><i style="width:0%;background:#ea580c"></i></div><span class="cnt">0 → 0</span></div><div class="sev-row"><span class="nm"><i class="dot" style="background:#ca8a04"></i>Medium</span><div class="bar" title="0 of 0 remaining"><i style="width:0%;background:#ca8a04"></i></div><span class="cnt">0 → 0</span></div><div class="sev-row"><span class="nm"><i class="dot" style="background:#2563eb"></i>Low</span><div class="bar" title="0 of 0 remaining"><i style="width:0%;background:#2563eb"></i></div><span class="cnt">0 → 0</span></div><div class="ba"><div><small>Before</small><b style="color:#c2410c">0 CVEs</b><em>0.0 CVSS Score</em></div><div style="font-size:20px;color:var(--muted)">→</div><div><small>After</small><b style="color:#c2410c">0 CVEs</b><em>0.0 CVSS Remaining</em></div><div><small>Patches</small><b style="color:#c2410c">0 Fixed (0 Patches)</b><em>Max CVSS: 0.0 / 10</em></div></div></section>
+          <section class="card" id="compliance"><div class="panel-head"><h3>🏛️ Compliance Checks</h3><span class="pill tone t-ok" style="padding:6px 14px">✔ PASS</span></div><div class="comp"><table><thead><tr><th>Standard</th><th>Control</th><th style="text-align:right">Status</th></tr></thead><tbody></tbody></table></div></section>
+        </div>
+        <section class="card" id="breakdown"><div class="panel-head"><h3>🛡️ CVE Remediation Breakdown (Fixed vs. Remaining)</h3><span class="badge-mono">0 Fixed · 0 Remaining</span></div><div class="group tone t-ok"><h4>🎉 No remaining vulnerabilities</h4></div></section>
+      </div>
+      <div class="view" id="view-dashboard" hidden=""><div class="card placeholder">🤖 Agent Activity Dashboard is not part of this sample.</div></div>
+      <div class="view" id="view-logs" hidden=""><div class="card placeholder">🖥️ Code &amp; Logs is not part of this sample.</div></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" hidden=""></div>
+
+<!-- Edit this JSON block to update the report data. Keep it valid JSON. -->
+<script type="application/json" id="scan-report-data">
+  __SCAN_REPORT_JSON__
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- helpers ---------- */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var safeUrl = function (u) { return /^https?:\/\//i.test(u || '') ? u : '#'; };
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+  var num = function (v) { return Number(v) || 0; };
+  var fmt1 = function (n) { return num(n).toFixed(1); };
+  var fmtDur = function (sec) {
+    sec = Math.max(0, Math.round(num(sec)));
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return (h ? h + 'h ' : '') + (h || m ? m + 'm ' : '') + s + 's';
+  };
+  var fmtDate = function (iso) {
+    var d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleString('en-GB');
+  };
+  var gradeColor = function (g) {
+    return { A: '#3f6212', B: '#65a30d', C: '#ca8a04', D: '#ea580c', F: '#dc2626' }[String(g).toUpperCase()] || '#6b7280';
+  };
+  var toast = function (msg) {
+    var t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 3500);
+  };
+
+  var STATUSES = [
+    { key: 'completed',   label: 'Completed',   icon: '✅', tone: 't-ok' },
+    { key: 'in_progress', label: 'In Progress', icon: '🔄', tone: 't-warn' },
+    { key: 'pending',     label: 'Pending',     icon: '⏳', tone: 't-yellow' },
+    { key: 'failed',      label: 'Failed',      icon: '❌', tone: 't-bad' },
+    { key: 'cancelled',   label: 'Cancelled',   icon: '🚫', tone: 't-gray' }
+  ];
+  var statusInfo = function (key) {
+    key = norm(key);
+    if (key === 'success') key = 'completed';
+    if (key === 'running') key = 'in_progress';
+    for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].key === key) return STATUSES[i];
+    return { key: key, label: key, icon: '•', tone: 't-gray' };
+  };
+  var SEV = [
+    { key: 'critical', label: 'Critical', color: '#b91c1c', tone: 't-bad' },
+    { key: 'high',     label: 'High',     color: '#ea580c', tone: 't-warn' },
+    { key: 'medium',   label: 'Medium',   color: '#ca8a04', tone: 't-yellow' },
+    { key: 'low',      label: 'Low',      color: '#2563eb', tone: 't-gray' }
+  ];
+  var sevTone = function (s) { var f = SEV.filter(function (x) { return x.key === norm(s); })[0]; return f ? f.tone : 't-gray'; };
+
+  /* ---------- derive numbers from the raw findings ---------- */
+  function compute(D) {
+    var fixed = D.fixed || [], rem = D.remaining || [];
+    var cnt = function (arr, s) { return arr.filter(function (v) { return norm(v.severity) === s; }).length; };
+    var sum = function (arr) { return arr.reduce(function (a, v) { return a + num(v.cvss); }, 0); };
+    var before = {}, after = {};
+    SEV.forEach(function (s) { after[s.key] = cnt(rem, s.key); before[s.key] = cnt(fixed, s.key) + after[s.key]; });
+    var cvssAfter = sum(rem), cvssBefore = sum(fixed) + cvssAfter;
+    var chBefore = before.critical + before.high, chAfter = after.critical + after.high;
+    var riskPts = cvssBefore - cvssAfter;
+    return {
+      fixed: fixed, rem: rem, before: before, after: after,
+      total: fixed.length + rem.length,
+      cvssBefore: cvssBefore, cvssAfter: cvssAfter,
+      maxRem: Math.max.apply(null, [0].concat(rem.map(function (v) { return num(v.cvss); }))),
+      chBefore: chBefore, chAfter: chAfter, chFixed: chBefore - chAfter,
+      riskPts: riskPts, riskPct: cvssBefore ? Math.round(riskPts / cvssBefore * 100) : 0
+    };
+  }
+
+  /* ---------- renderers ---------- */
+  function renderHeader(D) {
+    var a = D.app || {};
+    $('#brandName').textContent = a.name || 'Security Agent';
+    $('#brandVer').textContent = a.version || '';
+    $('#brandVer').hidden = !a.version;
+    $('#brandTag').textContent = a.tagline || '';
+    document.title = (a.name || 'Security Agent') + ' – Scan Report';
+  }
+
+  function renderWorkflow(D) {
+    var w = D.workflow || {}, st = statusInfo(w.status);
+    $('#workflow').innerHTML =
+      '<div class="wf-head"><div>' +
+        '<div class="eyebrow">Active Application Workflow</div>' +
+        '<h1>' + esc(w.name) + '</h1>' +
+        '<div class="repo">🔗 Repo URL: <a href="' + esc(safeUrl(w.repoUrl)) + '" target="_blank" rel="noopener noreferrer">' + esc(w.repoUrl) + '</a></div>' +
+      '</div><span class="pill tone ' + st.tone + '" style="padding:8px 16px">' + esc(String(w.status || '').toUpperCase()) + '</span></div>' +
+      '<div class="chips">' +
+        '<span class="chip">Session: ' + esc(w.sessionId) + '</span>' +
+        '<span class="chip">🌿 Branch: ' + esc(w.baseBranch) + ' → ' + esc(w.fixBranch) + '</span>' +
+        '<span class="chip">🛡️ Severity: ' + esc(w.severity) + '</span>' +
+        '<span class="chip">⏱️ Duration: ' + esc(fmtDur(w.durationSeconds)) + '</span>' +
+        '<span class="chip">🔁 Retries: ' + esc(num(w.retries)) + '/' + esc(num(w.maxRetries)) + '</span>' +
+      '</div>';
+  }
+
+  function renderSummary(D, c) {
+    var s = D.summary || {}, w = D.workflow || {};
+    var b = s.scoreBefore || { grade: '?', score: 0 }, a = s.scoreAfter || { grade: '?', score: 0 };
+    var color = gradeColor(a.grade), R = 52, C = 2 * Math.PI * R;
+    var dash = C * Math.max(0, Math.min(100, num(a.score))) / 100;
+    var dur = fmtDur(w.durationSeconds);
+    var ids = c.rem.map(function (v) { return v.id; }).join(', ');
+    var headline = s.headline || ('Fixed ' + c.fixed.length + ' of ' + c.total + ' CVEs' + (c.rem.length ? ' (' + c.rem.length + ' Remaining)' : ''));
+    var detail = s.detail || ('Score improved from ' + b.grade + ' (' + b.score + ') → ' + a.grade + ' (' + a.score + ') in ' + dur + '.' + (c.rem.length ? ' Remaining: ' + ids + '.' : ''));
+    var pr = s.pr;
+    $('#summary').innerHTML =
+      '<div class="sum-grid">' +
+        '<div class="score">' +
+          '<div class="ring"><svg width="140" height="140" viewBox="0 0 140 140">' +
+            '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="var(--track)" stroke-width="12"/>' +
+            '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + color + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + dash.toFixed(1) + ' ' + C.toFixed(1) + '"/>' +
+          '</svg><div class="mid"><div class="g" style="color:' + color + '">' + esc(a.grade) + '</div><div class="s">' + esc(a.score) + '/100</div></div></div>' +
+          '<b>Security Health Score</b>' +
+          '<small>Before: ' + esc(b.grade) + ' (' + esc(b.score) + ') → After: ' + esc(a.grade) + ' (' + esc(a.score) + ')</small>' +
+        '</div>' +
+        '<div>' +
+          '<div class="sum-top"><span class="pill tone t-pink">SUMMARY</span><span class="mono muted" style="font-size:12px">' + (D.updatedAt ? 'Updated ' + esc(fmtDate(D.updatedAt)) : '') + '</span></div>' +
+          '<div class="banner tone ' + (c.rem.length ? 't-pink warn' : 't-ok ok') + '"><span style="color:var(--text)">⚠️ <b>' + esc(headline) + ':</b> ' + esc(detail) + '</span></div>' +
+          (pr ?
+            '<div class="pr tone t-ok"><div class="pr-top">' +
+              '<a href="' + esc(safeUrl(pr.url)) + '" target="_blank" rel="noopener noreferrer">🔀 ' + esc(pr.title) + ' ↗</a>' +
+              '<span class="branch">🌿 ' + esc(w.baseBranch) + ' ← ' + esc(w.fixBranch) + '</span></div>' +
+              '<a class="link" href="' + esc(safeUrl(pr.url)) + '" target="_blank" rel="noopener noreferrer">🔗 ' + esc(pr.url) + '</a>' +
+              '<small>' + esc(pr.note) + '</small></div>' : '') +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderMetrics(D, c) {
+    var w = D.workflow || {}, b = D.build || {};
+    var ok = norm(b.status) === 'passed';
+    var items = [
+      { lab: 'Critical &amp; High Fixed', ico: '🛡️', bg: '#ecfccb', val: c.chFixed + '/' + c.chBefore, col: '#c2410c',
+        sub: c.chAfter + ' Critical/High remaining (' + c.chFixed + ' fixed)' },
+      { lab: 'Risk Reduction', ico: '📉', bg: '#dbeafe', val: c.riskPct + '% (-' + fmt1(c.riskPts) + ' pts)', col: 'var(--text)',
+        sub: c.fixed.length + ' of ' + c.total + ' CVEs fixed (' + c.rem.length + ' remaining)' },
+      { lab: 'Fix Time', ico: '⚡', bg: '#ffedd5', val: fmtDur(w.durationSeconds), col: 'var(--text)',
+        sub: 'Completed in ' + fmtDur(w.durationSeconds) },
+      { lab: 'Build &amp; Tests', ico: ok ? '✅' : '❌', bg: ok ? '#ecfccb' : '#fee2e2', val: String(b.status || 'n/a').toUpperCase(), col: ok ? '#3f6212' : '#b91c1c',
+        sub: esc(b.note || '') }
+    ];
+    $('#metrics').innerHTML = items.map(function (m) {
+      return '<div class="metric"><div class="top"><span class="lab">' + m.lab + '</span>' +
+        '<span class="ico" style="background:' + m.bg + '">' + m.ico + '</span></div>' +
+        '<div class="val" style="color:' + m.col + '">' + esc(m.val) + '</div><div class="sub">' + m.sub + '</div></div>';
+    }).join('');
+  }
+
+  function renderVulns(D, c) {
+    var rows = SEV.map(function (s) {
+      var pct = c.before[s.key] ? Math.round(c.after[s.key] / c.before[s.key] * 100) : 0;
+      return '<div class="sev-row"><span class="nm"><i class="dot" style="background:' + s.color + '"></i>' + s.label + '</span>' +
+        '<div class="bar" title="' + c.after[s.key] + ' of ' + c.before[s.key] + ' remaining"><i style="width:' + pct + '%;background:' + s.color + '"></i></div>' +
+        '<span class="cnt">' + c.before[s.key] + ' → ' + c.after[s.key] + '</span></div>';
+    }).join('');
+    $('#vulns').innerHTML =
+      '<div class="panel-head"><h3>📊 Vulnerabilities (Before → After)</h3><span class="badge-mono">' + c.total + ' Total CVEs (' + fmt1(c.cvssBefore) + ' CVSS pts)</span></div>' +
+      rows +
+      '<div class="ba">' +
+        '<div><small>Before</small><b style="color:#c2410c">' + c.total + ' CVEs</b><em>' + fmt1(c.cvssBefore) + ' CVSS Score</em></div>' +
+        '<div style="font-size:20px;color:var(--muted)">→</div>' +
+        '<div><small>After</small><b style="color:#c2410c">' + c.rem.length + ' CVEs</b><em>' + fmt1(c.cvssAfter) + ' CVSS Remaining</em></div>' +
+        '<div><small>Patches</small><b style="color:#c2410c">' + c.fixed.length + ' Fixed (' + num((D.summary || {}).patchesApplied) + ' Patches)</b><em>Max CVSS: ' + fmt1(c.maxRem) + ' / 10</em></div>' +
+      '</div>';
+  }
+
+  var statusTone = { pass: 't-ok', partial: 't-warn', remaining: 't-warn', fail: 't-bad' };
+  function renderCompliance(D, c) {
+    var cp = D.compliance || { checks: [] };
+    var ov = cp.overall || { status: c.rem.length ? 'partial' : 'pass', label: c.rem.length ? 'PARTIAL (' + c.fixed.length + '/' + c.total + ' FIXED)' : 'PASS' };
+    var rows = (cp.checks || []).map(function (k) {
+      return '<tr><td>' + esc(k.standard) + '</td><td>' + esc(k.control) + '</td><td class="st"><span class="pill tone ' + (statusTone[norm(k.status)] || 't-gray') + '">' + esc(k.label || k.status) + '</span></td></tr>';
+    }).join('');
+    $('#compliance').innerHTML =
+      '<div class="panel-head"><h3>🏛️ Compliance Checks</h3><span class="pill tone ' + (norm(ov.status) === 'pass' ? 't-ok' : 't-pink') + '" style="padding:6px 14px">' +
+      (norm(ov.status) === 'pass' ? '✔' : '⚠') + ' ' + esc(ov.label) + '</span></div>' +
+      '<div class="comp"><table><thead><tr><th>Standard</th><th>Control</th><th style="text-align:right">Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function renderBreakdown(c) {
+    var fixedHtml = c.fixed.length ?
+      '<div class="group tone t-ok"><h4>✅ Fixed Vulnerabilities (' + c.fixed.length + ' Resolved)</h4><div class="pills">' +
+      c.fixed.map(function (v) {
+        return '<span class="cve-pill">✓ <span class="id">' + esc(v.id) + '</span> · 📦 ' + esc(v.package) +
+          ' (' + esc(v.installedVersion) + ' → ' + esc((v.fixedVersions || []).join(', ')) + ') · 📄 ' + esc(v.file) + '</span>';
+      }).join('') + '</div></div>' : '';
+    var remHtml = c.rem.length ?
+      '<div class="group tone t-warn"><h4>⚠️ Remaining Vulnerabilities (' + c.rem.length + ' Unresolved) &amp; Why They Remained</h4>' +
+      c.rem.map(function (v) {
+        return '<div class="rem" style="--c:#ea580c"><div class="l1"><span class="pill tone ' + sevTone(v.severity) + '">' + esc(String(v.severity).toUpperCase()) + '</span>' +
+          '<b>' + esc(v.id) + '</b><span class="pk">📦 ' + esc(v.package) + '</span>' +
+          '<span class="mono muted" style="font-size:12.5px">installed: ' + esc(v.installedVersion) + ' (no fix released) · 📄 ' + esc(v.file) + '</span></div>' +
+          '<div class="why">💡 <b>Why it remained:</b> ' + esc(v.reason || 'No reason provided.') + '</div></div>';
+      }).join('') + '</div>' :
+      '<div class="group tone t-ok"><h4>🎉 No remaining vulnerabilities</h4></div>';
+    $('#breakdown').innerHTML =
+      '<div class="panel-head"><h3>🛡️ CVE Remediation Breakdown (Fixed vs. Remaining)</h3><span class="badge-mono">' + c.fixed.length + ' Fixed · ' + c.rem.length + ' Remaining</span></div>' +
+      fixedHtml + remHtml;
+  }
+
+  function renderOverall(D, c) {
+    var target = $('#overall');
+    if (!target) return;
+    var w = D.workflow || {}, s = D.summary || {};
+    var tiles = [
+      ['Total CVEs Fixed', c.fixed.length + ' / ' + c.total, '#3f6212'],
+      ['Patches Applied', num(s.patchesApplied), '#c2410c'],
+      ['Avg Fix Time', fmtDur(w.durationSeconds), 'var(--text)'],
+      ['MRs / PRs Ready', s.pr ? 1 : 0, '#3f6212']
+    ];
+    target.innerHTML = '<div class="card-title"><h3>🌐 Overall Summary</h3></div><div class="tiles">' +
+      tiles.map(function (t) { return '<div class="tile"><small>' + t[0] + '</small><b style="color:' + t[2] + '">' + esc(t[1]) + '</b></div>'; }).join('') + '</div>';
+  }
+
+  /* ---------- applications list + status filter ---------- */
+  var APPS = [], state = { filter: null, q: '', scope: 'mine', page: 1 }, PAGE = 5;
+
+  function renderStatusGrid() {
+    $('#statusGrid').innerHTML = STATUSES.map(function (s) {
+      var n = APPS.filter(function (a) { return statusInfo(a.status).key === s.key; }).length;
+      return '<button class="status-card tone ' + s.tone + (state.filter === s.key ? ' active' : '') + '" data-status="' + s.key + '">' +
+        '<span class="ic">' + s.icon + '</span>' + s.label + '<span class="n">' + n + '</span></button>';
+    }).join('');
+  }
+
+  function renderApps() {
+    if (!$('#appList')) return;
+    var q = state.q.trim().toLowerCase();
+    var list = APPS.filter(function (a) {
+      return (state.scope === 'all' || a.mine !== false) &&
+        (!state.filter || statusInfo(a.status).key === state.filter) &&
+        (!q || (String(a.name) + ' ' + String(a.repo || '')).toLowerCase().indexOf(q) > -1);
+    });
+    var pages = Math.max(1, Math.ceil(list.length / PAGE));
+    state.page = Math.min(state.page, pages);
+    var slice = list.slice((state.page - 1) * PAGE, state.page * PAGE);
+
+    $('#appCount').textContent = APPS.length + ' Apps';
+    var f = state.filter ? statusInfo(state.filter) : null;
+    var badge = $('#appFilter');
+    badge.textContent = f ? f.label : 'All';
+    badge.className = 'pill tone ' + (f ? f.tone : 't-gray');
+
+    $('#appList').innerHTML = slice.length ? slice.map(function (a) {
+      var st = statusInfo(a.status);
+      return '<div class="app-item"><div><b>' + esc(a.name) + '</b><small>' + esc(a.repo) + '</small></div><span class="pill tone ' + st.tone + '">' + esc(st.label) + '</span></div>';
+    }).join('') : '<div class="app-empty">No applications found</div>';
+
+    var btns = '<button data-page="' + (state.page - 1) + '"' + (state.page <= 1 ? ' disabled' : '') + '>‹ Previous</button>';
+    for (var p = 1; p <= pages; p++) btns += '<button data-page="' + p + '"' + (p === state.page ? ' class="cur"' : '') + '>' + p + '</button>';
+    btns += '<button data-page="' + (state.page + 1) + '"' + (state.page >= pages ? ' disabled' : '') + '>Next ›</button>';
+    $('#appPager').innerHTML = btns;
+  }
+
+  /* ---------- CSV export ---------- */
+  var D_ref = null;
+  function exportCsv() {
+    var cell = function (v) {
+      var s = String(v == null ? '' : v);
+      if (/^[=+\-@]/.test(s)) s = "'" + s;           // neutralise spreadsheet formulas
+      return '"' + s.replace(/"/g, '""') + '"';
+    };
+    var rows = [['Status', 'CVE', 'Severity', 'CVSS', 'Package', 'Installed', 'Fixed Versions', 'File', 'Reason']];
+    (D_ref.fixed || []).forEach(function (v) {
+      rows.push(['Fixed', v.id, v.severity, v.cvss, v.package, v.installedVersion, (v.fixedVersions || []).join(' | '), v.file, '']);
+    });
+    (D_ref.remaining || []).forEach(function (v) {
+      rows.push(['Remaining', v.id, v.severity, v.cvss, v.package, v.installedVersion, '', v.file, v.reason]);
+    });
+    var csv = '\ufeff' + rows.map(function (r) { return r.map(cell).join(','); }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'security-report-' + ((D_ref.workflow || {}).sessionId || 'latest') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  /* ---------- wiring ---------- */
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t;
+    $('#themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+    try { localStorage.setItem('sa-theme', t); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('sa-theme'); } catch (e) {}
+  setTheme(saved || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  $('#themeBtn').addEventListener('click', function () {
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+
+  $('#tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    document.querySelectorAll('.view').forEach(function (v) { v.hidden = v.id !== 'view-' + b.dataset.view; });
+  });
+
+  $('#statusGrid').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-status]'); if (!b) return;
+    state.filter = state.filter === b.dataset.status ? null : b.dataset.status;
+    state.page = 1; renderStatusGrid(); renderApps();
+  });
+  var appPager = $('#appPager');
+  if (appPager) appPager.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-page]'); if (!b || b.disabled) return;
+    state.page = Number(b.dataset.page); renderApps();
+  });
+  var appSearch = $('#appSearch');
+  if (appSearch) appSearch.addEventListener('input', function (e) { state.q = e.target.value; state.page = 1; renderApps(); });
+  var appScope = $('#appScope');
+  if (appScope) appScope.addEventListener('change', function (e) { state.scope = e.target.value; state.page = 1; renderApps(); });
+  $('#exportBtn').addEventListener('click', function () { if (D_ref) exportCsv(); });
+
+  // Start Scan only collects the form values and raises an event; connect it to your backend.
+  var scanBtn = $('#scanBtn');
+  if (scanBtn) scanBtn.addEventListener('click', function () {
+    var url = $('#scanUrl').value.trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) { toast('Enter a valid Git repository URL (https://…)'); return; }
+    document.dispatchEvent(new CustomEvent('security-agent:start-scan', { detail: {
+      repoUrl: url, branch: $('#scanBranch').value.trim() || 'main',
+      severity: $('#scanSev').value, maxRetries: Number($('#scanRetries').value)
+    } }));
+    toast('Scan request raised (listen for the "security-agent:start-scan" event)');
+  });
+
+  /* ---------- boot ---------- */
+  function showError(msg) {
+    $('#view-reports').innerHTML = '<div class="card placeholder" style="color:#b91c1c">⚠️ ' + esc(msg) + '</div>';
+  }
+  try {
+    var dataElement = $('#scan-report-data');
+    if (!dataElement) throw new Error('Embedded report data block is missing.');
+    var D = JSON.parse(dataElement.textContent);
+    if (!D || typeof D !== 'object' || Array.isArray(D)) {
+      throw new Error('Embedded report data must be a JSON object.');
+    }
+    if (!D.app || !D.workflow || !Array.isArray(D.fixed) || !Array.isArray(D.remaining)) {
+      throw new Error('Embedded report data is missing required fields (app, workflow, fixed, remaining).');
+    }
+    D_ref = D;
+    APPS = Array.isArray(D.applications) ? D.applications : [];
+    var c = compute(D);
+    renderHeader(D); renderStatusGrid(); renderApps();
+    renderWorkflow(D); renderSummary(D, c); renderMetrics(D, c);
+    renderVulns(D, c); renderCompliance(D, c); renderBreakdown(c); renderOverall(D, c);
+  } catch (err) {
+    console.error('Could not render the scan report:', err);
+    showError('Could not render the report: ' + err.message + '. Check the embedded JSON data near the top of the page.');
+  }
+})();
+</script>
+
+
+</body></html>
